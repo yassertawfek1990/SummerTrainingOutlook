@@ -33,7 +33,15 @@ export async function POST(request: Request) {
     .single();
 
   if (dayError) {
-    return NextResponse.json({ error: dayError.message }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: dayError.message,
+        code: dayError.code,
+        details: dayError.details,
+        hint: dayError.hint,
+      },
+      { status: 500 }
+    );
   }
 
   if (Array.isArray(questions) && questions.length > 0) {

@@ -5,6 +5,25 @@ import LogoutButton from "./LogoutButton";
 
 export const dynamic = "force-dynamic";
 
+// This renders server-side (Vercel's servers run in UTC), so without an
+// explicit timezone every student would see UTC times instead of their
+// actual Cairo-local unlock times. Hardcoding Africa/Cairo here means every
+// viewer sees the same correct wall-clock time regardless of where the page
+// happens to render or what device they're on.
+const COURSE_TIMEZONE = "Africa/Cairo";
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-GB", { timeZone: COURSE_TIMEZONE });
+}
+
+function formatDateTime(iso: string) {
+  return new Date(iso).toLocaleString("en-GB", {
+    timeZone: COURSE_TIMEZONE,
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}
+
 export default async function DashboardPage() {
   const supabase = createClient();
   const {
@@ -89,14 +108,14 @@ export default async function DashboardPage() {
                   return (
                     <tr key={day.id}>
                       <td className="px-5 py-4 text-sm text-gray-700">
-                        {new Date(day.pdf_unlock_at).toLocaleDateString()}
+                        {formatDate(day.pdf_unlock_at)}
                       </td>
                       <td className="px-5 py-4 text-sm font-medium text-ink">
                         Day {day.day_number}: {day.topic_name}
                       </td>
                       <td className="px-5 py-4 text-sm">
                         <a
-                          href={day.pdf_url}
+                          href={`/api/pdf/${day.id}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 underline"
@@ -118,8 +137,7 @@ export default async function DashboardPage() {
                           </Link>
                         ) : (
                           <span className="text-gray-400">
-                            Unlocks{" "}
-                            {new Date(day.quiz_unlock_at).toLocaleString()}
+                            Unlocks {formatDateTime(day.quiz_unlock_at)}
                           </span>
                         )}
                       </td>

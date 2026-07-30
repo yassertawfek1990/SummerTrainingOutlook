@@ -131,7 +131,32 @@ alter table email_log enable row level security;
 create policy "Users can view their own email log"
   on email_log for select using (auth.uid() = student_id);
 
--- 6. Storage bucket for PDFs. Public read (so email links + dashboard links
+-- 6. PDF views — tracks who's actually opened each day's PDF, and how many
+-- times. Links go through /api/pdf/[dayId] (which logs the view, then
+-- redirects to the real file) instead of pointing straight at the storage
+-- URL, so this table only fills in as students actually click.
+create table pdf_views (
+  id uuid primary key default gen_random_uuid(),
+  student_id uuid references profiles(id) on delete cascade not null,
+  course_day_id uuid references course_days(id) on delete cascade not null,
+  view_count int not null default 1,
+  first_viewed_at timestamptz default now(),
+  last_viewed_at timestamptz default now(),
+  unique (student_id, course_day_id)
+);
+
+alter table pdf_views enable row level security;
+
+create policy "Users can view their own pdf views"
+  on pdf_views for select using (auth.uid() = student_id);
+
+create policy "Users can insert their own pdf views"
+  on pdf_views for insert with check (auth.uid() = student_id);
+
+create policy "Users can update their own pdf views"
+  on pdf_views for update using (auth.uid() = student_id);
+
+-- 7. Storage bucket for PDFs. Public read (so email links + dashboard links
 -- work without extra auth), writes restricted to the service role only (the
 -- admin upload route uses the service role key, bypassing this policy check
 -- entirely — this policy just blocks random anon/browser uploads).
@@ -142,6 +167,20 @@ on conflict (id) do nothing;
 create policy "Public can read course PDFs"
   on storage.objects for select
   using (bucket_id = 'course-pdfs');
+
+-- 8. Explicit base table grants. RLS policies control *which rows* a role
+-- can touch, but roles also need the more basic "can touch this table at
+-- all" grant underneath — Supabase usually sets this up automatically, but
+-- if you ever see "permission denied for table X" (not an RLS violation
+-- message, a plain Postgres grant error), run this block again.
+grant usage on schema public to anon, authenticated, service_role;
+grant select, insert, update, delete on all tables in schema public
+  to anon, authenticated, service_role;
+grant usage, select on all sequences in schema public
+  to anon, authenticated, service_role;
+
+alter default privileges in schema public
+  grant select, insert, update, delete on tables to anon, authenticated, service_role;
 
 -- ============================================================
 -- Done. Next: add your course days (see /admin page once deployed),

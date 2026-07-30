@@ -105,7 +105,7 @@ export async function GET(request: Request) {
           to: item.student.email,
           studentName: item.student.full_name,
           topicName: item.day.topic_name,
-          pdfUrl: item.day.pdf_url,
+          dayId: item.day.id,
         });
       } else {
         await sendQuizEmail({

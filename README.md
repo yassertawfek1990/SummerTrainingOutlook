@@ -39,49 +39,30 @@ and everything shows up on a dashboard + leaderboard.
    under **Authentication > Sign In / Email** if you'd rather let students in
    immediately.
 
-### 2. Microsoft Graph (email sending)
+### 2. Gmail SMTP (email sending)
 
-This sends through your company account via Microsoft's Graph API using
-**app-only authentication (client credentials)** — the app authenticates as
-itself with a client ID/secret, no user login and no expiring tokens to
-babysit. This avoids the SMTP AUTH deprecation issue entirely, since it's
-proper OAuth2, not legacy basic auth.
+This sends through your own Gmail account using an App Password — no Google
+Cloud Console, no OAuth consent screens, no expiring tokens, and no company
+IT approval needed. For a course this size, it's the simplest reliable
+option.
 
-1. **In your Azure AD App Registration → API permissions**, make sure
-   `Mail.Send` is added as an **Application** permission (not Delegated —
-   Delegated permissions need an interactive user sign-in, which a cron job
-   doesn't have). Click **Add a permission → Microsoft Graph → Application
-   permissions → Mail.Send**.
-2. Click **Grant admin consent for United Pharmacy Company**. Application
-   permissions won't work until this shows a green checkmark.
-3. Grab three values:
-   - `MICROSOFT_CLIENT_ID` — the app's "Application (client) ID", on the
-     Overview page
-   - `MICROSOFT_CLIENT_SECRET` — the secret value you generated under
-     **Certificates & secrets** (copy it immediately, Azure only shows it
-     once)
-   - `MICROSOFT_TENANT_ID` — "Directory (tenant) ID", also on the Overview
-     page
-4. Set `MICROSOFT_SENDER_EMAIL` to `ym_tawfeek@unitedpharmacy.sa` — this is
-   the mailbox Graph will send *as*. With app-only permissions, this can
-   technically be any mailbox in your org's tenant, so double check it's the
-   right one.
+1. **Turn on 2-Step Verification** on the Gmail account you want to send
+   from, if it isn't already: [myaccount.google.com/security](https://myaccount.google.com/security).
+   App Passwords require this to be on.
+2. Go to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords),
+   enter a name like "Course Platform", and click **Create**.
+3. Copy the 16-character password shown (spaces don't matter, you can include
+   or strip them) — this goes in `GMAIL_APP_PASSWORD`. You won't be able to
+   view it again after closing the dialog, so copy it now.
+4. Set `GMAIL_USER` to that Gmail address, and `GMAIL_SENDER_NAME` to
+   whatever display name you want students to see (e.g. your course name).
 
-**Worth knowing:** with Application permissions and no further restriction,
-this app technically has permission to send as *any* mailbox in your tenant,
-not just yours — that's how app-only Graph permissions work by default.
-Microsoft's recommended hardening step is an **Application Access Policy**
-(via Exchange Online PowerShell) that locks the app down to only
-`ym_tawfeek@unitedpharmacy.sa`. This is optional to get things working today,
-but worth asking your IT admin about if this app registration might ever be
-reused for something else, or if your org's security policy expects it.
-
-**The "From" name:** Graph sends using the mailbox's actual display name as
-set in your organization's directory — there's no `SMTP_SENDER_NAME`-style
-override here like the personal-account setups had. If you want students to
-see a specific display name, that display name needs to be set on the
-`ym_tawfeek@unitedpharmacy.sa` account itself (Azure AD / Exchange admin
-center), not in this app's config.
+**Daily quota:** a free personal Gmail account is capped at **100 emails/day
+sent via SMTP**, with roughly 20/hour recommended before spam heuristics get
+suspicious. For 36 students × 2 emails/day (72 total), you're comfortably
+under the daily cap — the "Pacing sends" section below is what keeps you
+under the hourly rate too, by spreading sends across the hour instead of
+firing all 36 at once.
 
 ### 3. Deploy to Vercel
 
@@ -280,7 +261,7 @@ app/
     admin/add-day/          Inserts a new course day + questions
 lib/
   supabase/         Browser, server, and admin (service-role) clients
-  mailer.ts         Email templates + sending via Microsoft Graph (app-only)
+  mailer.ts         Email templates + sending via Gmail SMTP
 supabase/
   schema.sql        Full database schema — run this first
 ```

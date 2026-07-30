@@ -1,63 +1,38 @@
-import { ConfidentialClientApplication } from "@azure/msal-node";
+import nodemailer from "nodemailer";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-const msalClient = new ConfidentialClientApplication({
-  auth: {
-    clientId: process.env.MICROSOFT_CLIENT_ID!,
-    clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
-    authority: `https://login.microsoftonline.com/${process.env.MICROSOFT_TENANT_ID}`,
-  },
-});
-
-// Client-credentials flow: the app authenticates as itself (no signed-in user
-// needed), which is what an unattended cron job requires. Tokens are cached
-// by msal-node automatically and refreshed a little before they expire.
-async function getAccessToken(): Promise<string> {
-  const result = await msalClient.acquireTokenByClientCredential({
-    scopes: ["https://graph.microsoft.com/.default"],
+function getTransporter() {
+  return nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_APP_PASSWORD,
+    },
   });
-  if (!result?.accessToken) {
-    throw new Error("Failed to acquire Microsoft Graph access token");
-  }
-  return result.accessToken;
 }
 
 async function send(params: { to: string; subject: string; html: string }) {
-  const token = await getAccessToken();
-  const senderMailbox = process.env.MICROSOFT_SENDER_EMAIL;
+  const transporter = getTransporter();
+  const fromName = process.env.GMAIL_SENDER_NAME || "Course Team";
 
-  const res = await fetch(
-    `https://graph.microsoft.com/v1.0/users/${senderMailbox}/sendMail`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        message: {
-          subject: params.subject,
-          body: { contentType: "HTML", content: params.html },
-          toRecipients: [{ emailAddress: { address: params.to } }],
-        },
-        saveToSentItems: false,
-      }),
-    }
-  );
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Graph sendMail failed (${res.status}): ${errText}`);
-  }
+  return transporter.sendMail({
+    from: `"${fromName}" <${process.env.GMAIL_USER}>`,
+    to: params.to,
+    subject: params.subject,
+    html: params.html,
+  });
 }
 
 export async function sendPdfEmail(params: {
   to: string;
   studentName: string;
   topicName: string;
-  pdfUrl: string;
+  dayId: string;
 }) {
+  const pdfUrl = `${SITE_URL}/api/pdf/${params.dayId}`;
   return send({
     to: params.to,
     subject: params.topicName,
@@ -66,7 +41,7 @@ export async function sendPdfEmail(params: {
         <h2>Hi ${params.studentName},</h2>
         <p>Today's lesson is ready: <strong>${params.topicName}</strong></p>
         <p>
-          <a href="${params.pdfUrl}" style="display:inline-block;background:#1a1a2e;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">
+          <a href="${pdfUrl}" style="display:inline-block;background:#1a1a2e;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">
             Open PDF
           </a>
         </p>
