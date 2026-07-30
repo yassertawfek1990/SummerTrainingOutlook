@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import Logo from "@/app/components/Logo";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -53,7 +54,8 @@ export default function SignupPage() {
 
   if (done) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="min-h-screen flex flex-col items-center justify-center px-4">
+        <Logo className="h-12 mb-6" />
         <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center">
           <h1 className="text-xl font-bold text-ink mb-2">Check your email</h1>
           <p className="text-gray-600">
@@ -72,7 +74,8 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
+      <Logo className="h-12 mb-6" />
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
         <h1 className="text-2xl font-bold text-ink mb-1">Create your account</h1>
         <p className="text-gray-500 text-sm mb-6">
@@ -104,7 +107,7 @@ export default function SignupPage() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ink"
-              placeholder="+20 1xx xxx xxxx"
+              placeholder="+966 5x xxx xxxx"
             />
           </div>
 

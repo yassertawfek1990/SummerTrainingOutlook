@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import type { CourseDay, Attempt } from "@/types/database";
 import LogoutButton from "./LogoutButton";
+import Logo from "@/app/components/Logo";
 
 export const dynamic = "force-dynamic";
 
@@ -59,11 +60,14 @@ export default async function DashboardPage() {
     <div className="min-h-screen px-4 py-10">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-ink">Your Course Dashboard</h1>
-            <p className="text-gray-500 text-sm">
-              Welcome, {profile?.full_name || user?.email}
-            </p>
+          <div className="flex items-center gap-4">
+            <Logo className="h-9" />
+            <div>
+              <h1 className="text-2xl font-bold text-ink">Your Course Dashboard</h1>
+              <p className="text-gray-500 text-sm">
+                Welcome, {profile?.full_name || user?.email}
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-4">
             <Link
