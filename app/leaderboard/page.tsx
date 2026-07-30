@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/server";
+import Logo from "@/app/components/Logo";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +53,10 @@ export default async function LeaderboardPage() {
     <div className="min-h-screen px-4 py-10">
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-10">
-          <h1 className="text-2xl font-bold text-ink">Leaderboard</h1>
+          <div className="flex items-center gap-4">
+            <Logo className="h-9" />
+            <h1 className="text-2xl font-bold text-ink">Leaderboard</h1>
+          </div>
           <Link href="/dashboard" className="text-sm font-medium text-ink underline">
             Back to dashboard
           </Link>

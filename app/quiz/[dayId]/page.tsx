@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { CourseDay, QuizQuestion } from "@/types/database";
 import QuizForm from "./QuizForm";
+import Logo from "@/app/components/Logo";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +50,7 @@ export default async function QuizPage({
   return (
     <div className="min-h-screen px-4 py-10">
       <div className="max-w-2xl mx-auto">
+        <Logo className="h-9 mb-6" />
         <h1 className="text-2xl font-bold text-ink mb-1">
           Day {courseDay.day_number} Quiz
         </h1>

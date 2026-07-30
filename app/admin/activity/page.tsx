@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import ActivityTable from "./ActivityTable";
+import Logo from "@/app/components/Logo";
 
 export const dynamic = "force-dynamic";
 
@@ -77,11 +78,14 @@ export default async function ActivityPage() {
     <div className="min-h-screen px-4 py-10">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-ink">Student Activity</h1>
-            <p className="text-gray-500 text-sm">
-              Who's opened each PDF, who's taken each quiz, and their scores.
-            </p>
+          <div className="flex items-center gap-4">
+            <Logo className="h-9" />
+            <div>
+              <h1 className="text-2xl font-bold text-ink">Student Activity</h1>
+              <p className="text-gray-500 text-sm">
+                Who's opened each PDF, who's taken each quiz, and their scores.
+              </p>
+            </div>
           </div>
           <Link href="/admin" className="text-sm font-medium text-ink underline">
             Back to admin
