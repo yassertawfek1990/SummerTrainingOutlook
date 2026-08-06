@@ -10,6 +10,7 @@ export type StudentActivity = {
   studentId: string;
   fullName: string;
   email: string;
+  phone: string;
   days: {
     dayNumber: number;
     topicName: string;
@@ -37,7 +38,7 @@ export default async function ActivityPage() {
 
   const [{ data: profiles }, { data: days }, { data: attempts }, { data: pdfViews }] =
     await Promise.all([
-      admin.from("profiles").select("id, full_name, email").order("full_name"),
+      admin.from("profiles").select("id, full_name, email, phone").order("full_name"),
       admin.from("course_days").select("id, day_number, topic_name").order("day_number"),
       admin.from("attempts").select("student_id, course_day_id, score, total, taken_at"),
       admin
@@ -57,6 +58,7 @@ export default async function ActivityPage() {
     studentId: p.id,
     fullName: p.full_name,
     email: p.email,
+    phone: p.phone,
     days: (days || []).map((d: any) => {
       const attempt = attemptMap.get(attemptKey(p.id, d.id));
       const view = viewMap.get(attemptKey(p.id, d.id));

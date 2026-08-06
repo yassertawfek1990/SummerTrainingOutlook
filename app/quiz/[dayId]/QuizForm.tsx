@@ -7,7 +7,7 @@ type Question = {
   id: string;
   question_order: number;
   question_text: string;
-  options: string[];
+  options: { idx: number; text: string }[];
 };
 
 export default function QuizForm({
@@ -77,11 +77,11 @@ export default function QuizForm({
             {i + 1}. {q.question_text}
           </p>
           <div className="space-y-2">
-            {q.options.map((option, idx) => (
+            {q.options.map((option) => (
               <label
-                key={idx}
+                key={option.idx}
                 className={`flex items-center gap-3 border rounded-lg px-4 py-2.5 cursor-pointer transition ${
-                  answers[q.id] === idx
+                  answers[q.id] === option.idx
                     ? "border-ink bg-gray-50"
                     : "border-gray-200"
                 }`}
@@ -89,12 +89,12 @@ export default function QuizForm({
                 <input
                   type="radio"
                   name={q.id}
-                  checked={answers[q.id] === idx}
+                  checked={answers[q.id] === option.idx}
                   onChange={() =>
-                    setAnswers((prev) => ({ ...prev, [q.id]: idx }))
+                    setAnswers((prev) => ({ ...prev, [q.id]: option.idx }))
                   }
                 />
-                <span className="text-sm text-gray-700">{option}</span>
+                <span className="text-sm text-gray-700">{option.text}</span>
               </label>
             ))}
           </div>

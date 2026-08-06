@@ -47,6 +47,22 @@ export default async function QuizPage({
     .eq("course_day_id", courseDay.id)
     .order("question_order", { ascending: true });
 
+  // Drop "N/A" placeholder options for display (leftover from True/False
+  // quizzes imported before N/A-filtering existed) — but keep each real
+  // option's *original* index attached, since that's what correct_index in
+  // the database refers to. Renumbering here would break grading.
+  const isBlankOrNA = (v: string) =>
+    v.trim() === "" || v.trim().toLowerCase() === "n/a";
+
+  const questionsForClient = (questions || []).map((q: any) => ({
+    id: q.id,
+    question_order: q.question_order,
+    question_text: q.question_text,
+    options: (q.options as string[])
+      .map((text, idx) => ({ idx, text }))
+      .filter((o) => !isBlankOrNA(o.text)),
+  }));
+
   return (
     <div className="min-h-screen px-4 py-10">
       <div className="max-w-2xl mx-auto">
@@ -56,10 +72,7 @@ export default async function QuizPage({
         </h1>
         <p className="text-gray-500 mb-8">{courseDay.topic_name}</p>
 
-        <QuizForm
-          courseDayId={courseDay.id}
-          questions={(questions || []) as Omit<QuizQuestion, "correct_index">[]}
-        />
+        <QuizForm courseDayId={courseDay.id} questions={questionsForClient} />
       </div>
     </div>
   );

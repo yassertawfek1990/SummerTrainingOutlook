@@ -3,6 +3,15 @@
 import { useState } from "react";
 import type { StudentActivity } from "./page";
 
+// Builds a WhatsApp click-to-chat link. wa.me wants digits only (no +, no
+// spaces/dashes) — students typed their number in whatever format they liked
+// (e.g. "+966 5x xxx xxxx"), so strip everything down to digits here.
+function whatsappLink(phone: string, studentName: string) {
+  const digits = phone.replace(/\D/g, "");
+  const message = `Hi ${studentName}, this is regarding your progress in the training course.`;
+  return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+}
+
 export default function ActivityTable({
   activity,
 }: {
@@ -45,6 +54,9 @@ export default function ActivityTable({
               </th>
               <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase">
                 Last Activity
+              </th>
+              <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase">
+                Contact
               </th>
               <th></th>
             </tr>
@@ -99,13 +111,28 @@ export default function ActivityTable({
                     <td className="px-5 py-3 text-sm text-gray-500">
                       {lastActivity ? lastActivity.toLocaleString() : "—"}
                     </td>
+                    <td className="px-5 py-3 text-sm">
+                      {student.phone ? (
+                        <a
+                          href={whatsappLink(student.phone, student.fullName)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1.5 bg-green-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-green-700"
+                        >
+                          WhatsApp
+                        </a>
+                      ) : (
+                        <span className="text-gray-400 text-xs">No phone</span>
+                      )}
+                    </td>
                     <td className="px-5 py-3 text-sm text-gray-400">
                       {isExpanded ? "▲" : "▼"}
                     </td>
                   </tr>
                   {isExpanded && (
                     <tr>
-                      <td colSpan={6} className="bg-gray-50 px-5 py-4">
+                      <td colSpan={7} className="bg-gray-50 px-5 py-4">
                         <table className="w-full text-left text-sm">
                           <thead>
                             <tr className="text-xs text-gray-500 uppercase">

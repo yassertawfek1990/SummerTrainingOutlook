@@ -17,6 +17,9 @@ const emptyQuestion = (): QuestionDraft => ({
 
 // Expected columns (case-insensitive, matches the downloadable template):
 // Question | Option 1 | Option 2 | Option 3 | Option 4 | Correct Option (1-4)
+// True/False questions can leave Option 3/4 as "N/A" (or blank) — those get
+// dropped automatically, leaving a proper 2-choice question instead of two
+// real answers plus two junk "N/A" choices.
 function parseQuizExcel(rows: Record<string, any>[]): {
   questions: QuestionDraft[];
   errors: string[];
@@ -31,30 +34,42 @@ function parseQuizExcel(rows: Record<string, any>[]): {
     return key ? String(row[key] ?? "").trim() : "";
   };
 
+  const isBlankOrNA = (v: string) =>
+    v.trim() === "" || v.trim().toLowerCase() === "n/a";
+
   rows.forEach((row, i) => {
     const questionText = getCell(row, "Question");
     if (!questionText) return; // skip blank rows
 
-    const options = [1, 2, 3, 4].map((n) => getCell(row, `Option ${n}`));
+    const rawOptions = [1, 2, 3, 4].map((n) => getCell(row, `Option ${n}`));
     const correctRaw = getCell(row, "Correct Option");
     const correctNum = parseInt(correctRaw, 10);
 
-    if (options.some((o) => !o)) {
-      errors.push(`Row ${i + 2}: missing one or more options — skipped`);
+    // Drop N/A (or blank) options, tracking where the correct answer lands
+    // in the filtered list — e.g. Option 1/2 = TRUE/FALSE, Option 3/4 = N/A
+    // becomes a clean 2-option question with correctIndex 0 or 1.
+    const options: string[] = [];
+    let correctIndex = -1;
+    rawOptions.forEach((opt, idx) => {
+      if (isBlankOrNA(opt)) return;
+      if (idx === correctNum - 1) correctIndex = options.length;
+      options.push(opt);
+    });
+
+    if (options.length < 2) {
+      errors.push(
+        `Row ${i + 2}: fewer than 2 real options after removing N/A — skipped`
+      );
       return;
     }
-    if (!correctNum || correctNum < 1 || correctNum > 4) {
+    if (!correctNum || correctNum < 1 || correctNum > 4 || correctIndex === -1) {
       errors.push(
-        `Row ${i + 2}: "Correct Option" must be 1-4, got "${correctRaw}" — skipped`
+        `Row ${i + 2}: "Correct Option" (${correctRaw}) doesn't point to a real option — skipped`
       );
       return;
     }
 
-    questions.push({
-      questionText,
-      options,
-      correctIndex: correctNum - 1,
-    });
+    questions.push({ questionText, options, correctIndex });
   });
 
   return { questions, errors };
